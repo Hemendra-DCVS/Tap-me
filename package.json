@@ -17,6 +17,7 @@
   "dependencies": {
     "@graphql-tools/schema": "^10.0.6",
     "@supabase/supabase-js": "^2.45.3",
+    "dotenv": "^16.4.5",
     "graphql-yoga": "^5.7.0",
     "node-telegram-bot-api": "^0.66.0"
   }
