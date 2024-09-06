@@ -1,57 +1,17 @@
-import { createYoga } from 'graphql-yoga';
-import { makeExecutableSchema } from '@graphql-tools/schema';
-import { createClient } from '@supabase/supabase-js';
-import fs from 'fs';
-import http from 'http';
-import TelegramBot from 'node-telegram-bot-api';
-import dotenv from 'dotenv';
+const TelegramBot = require('node-telegram-bot-api');
+const { createClient } = require('@supabase/supabase-js');
+const token = process.env.TELEGRAM_BOT_TOKEN;  
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_KEY;
 
-// Load environment variables
-dotenv.config();
-
-// Supabase client
-const supabase = createClient(process.env.SUPABASE_URL as string, process.env.SUPABASE_KEY as string);
-
-// GraphQL schema
-const typeDefs = fs.readFileSync('./schema.graphql', 'utf-8');
-const resolvers = {
-  Query: {
-    getUser: async (_: any, { telegramId }: { telegramId: string }) => {
-      const { data, error } = await supabase
-        .from('users')
-        .select('*')
-        .eq('telegram_id', telegramId)
-        .single();
-      return data || null;
-    },
-  },
-  Mutation: {
-    addCoins: async (_: any, { telegramId, coins }: { telegramId: string, coins: number }) => {
-      console.log("Adding coins for:", telegramId, "Coins:", coins);
-      const { data, error } = await supabase
-        .from('users')
-        .upsert({ telegram_id: telegramId, coins })
-        .single();
-
-      if (error) {
-        console.error("Supabase error:", error);
-        throw new Error("Error adding coins");
-      }
-
-      console.log("Added coins:", data);
-      return data;
-    },
-  },
-};
-
-const schema = makeExecutableSchema({ typeDefs, resolvers });
-const yoga = createYoga({ schema });
-
-// Initialize the Telegram bot
-const bot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN as string, { polling: true });
+const bot = new TelegramBot(token, { polling: true });
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 bot.onText(/\/start/, (msg) => {
   const chatId = msg.chat.id;
+  const userId = msg.from.id; // Use Telegram user ID
+
+  // Send a message or a start command to the user
   bot.sendMessage(chatId, 'Welcome to TapMe Clicker Game! Click the button below to start tapping.', {
     reply_markup: {
       inline_keyboard: [
@@ -64,16 +24,21 @@ bot.onText(/\/start/, (msg) => {
 bot.on('callback_query', async (query) => {
   const chatId = query.message?.chat.id;
   const data = query.data;
+  const userId = query.from.id; // Use Telegram user ID
 
   if (data === 'tap_me' && chatId) {
     // Handle tap action
-    // You may want to update user coins here and send a response
-    // Example: Updating user coins and sending the updated balance
-    const userId = String(chatId); // Assuming chatId is used as userId
-    const { data: userData } = await supabase
+    // Update user coins and send a response
+    const { data: userData, error } = await supabase
       .from('users')
-      .upsert({ telegram_id: userId, coins: 1 })
+      .upsert({ telegram_id: userId, coins: (await getUserCoins(userId)) + 1 })
       .single();
+
+    if (error) {
+      console.error("Supabase error:", error);
+      bot.sendMessage(chatId, 'Error updating coins.');
+      return;
+    }
 
     if (userData) {
       bot.sendMessage(chatId, `You have ${userData.coins} coins.`);
@@ -81,13 +46,18 @@ bot.on('callback_query', async (query) => {
   }
 });
 
-// Use the port provided by the environment variable, default to 4000 if not set
-const PORT = process.env.PORT || 4000;
+// Helper function to get the current coin balance
+async function getUserCoins(userId) {
+  const { data, error } = await supabase
+    .from('users')
+    .select('coins')
+    .eq('telegram_id', userId)
+    .single();
 
-// Use Node.js built-in HTTP server
-const server = http.createServer(yoga);
+  if (error) {
+    console.error("Supabase error:", error);
+    return 0;
+  }
 
-// Start the server on the specified port
-server.listen(PORT, () => {
-  console.log(`GraphQL Yoga server is running on http://localhost:${PORT}`);
-});
+  return data?.coins || 0;
+}
