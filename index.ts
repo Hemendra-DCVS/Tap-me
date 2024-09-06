@@ -18,7 +18,7 @@ const resolvers = {
       return data || null;
     },
   },
-  const resolvers = {
+  
     Mutation: {
       addCoins: async (_: any, { telegramId, coins }: { telegramId: string, coins: number }) => {
         console.log("Adding coins for:", telegramId, "Coins:", coins);
@@ -36,7 +36,7 @@ const resolvers = {
         return data;
       },
     },
-  }  
+  
 };
 
 const schema = makeExecutableSchema({ typeDefs, resolvers });
