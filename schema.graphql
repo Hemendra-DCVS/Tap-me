@@ -1,0 +1,13 @@
+type Query {
+  getUser(telegramId: String!): User
+}
+
+type Mutation {
+  addCoins(telegramId: String!, coins: Int!): User
+}
+
+type User {
+  id: ID!
+  telegramId: String!
+  coins: Int!
+}
