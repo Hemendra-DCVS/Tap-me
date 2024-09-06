@@ -18,15 +18,25 @@ const resolvers = {
       return data || null;
     },
   },
-  Mutation: {
-    addCoins: async (_: any, { telegramId, coins }: { telegramId: string, coins: number }) => {
-      const { data, error } = await supabase
-        .from('users')
-        .upsert({ telegram_id: telegramId, coins })
-        .single();
-      return data;
+  const resolvers = {
+    Mutation: {
+      addCoins: async (_: any, { telegramId, coins }: { telegramId: string, coins: number }) => {
+        console.log("Adding coins for:", telegramId, "Coins:", coins);
+        const { data, error } = await supabase
+          .from('users')
+          .upsert({ telegram_id: telegramId, coins })
+          .single();
+  
+        if (error) {
+          console.error("Supabase error:", error);
+          throw new Error("Error adding coins");
+        }
+  
+        console.log("Added coins:", data);
+        return data;
+      },
     },
-  },
+  }  
 };
 
 const schema = makeExecutableSchema({ typeDefs, resolvers });
