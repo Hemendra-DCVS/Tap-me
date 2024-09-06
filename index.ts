@@ -5,7 +5,7 @@ import { createClient } from '@supabase/supabase-js';
 import fs from 'fs';
 import http from 'http';
 
-const supabase = createClient('https://voqijrqancgwrkoitlxk.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZvcWlqcnFhbmNnd3Jrb2l0bHhrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjU1OTI0MTksImV4cCI6MjA0MTE2ODQxOX0.41oK5Y4y6byevzavwYicwflH7xP-RdxRs7_t1CvG9Yk');
+const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
 
 const typeDefs = fs.readFileSync('./schema.graphql', 'utf-8');
 const resolvers = {
