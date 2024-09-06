@@ -1,5 +1,4 @@
 import { createYoga } from 'graphql-yoga';
-
 import { makeExecutableSchema } from '@graphql-tools/schema';
 import { createClient } from '@supabase/supabase-js';
 import fs from 'fs';
@@ -33,10 +32,13 @@ const resolvers = {
 const schema = makeExecutableSchema({ typeDefs, resolvers });
 const yoga = createYoga({ schema });
 
+// Use the port provided by the environment variable, default to 4000 if not set
+const PORT = process.env.PORT || 4000;
+
 // Use Node.js built-in HTTP server
 const server = http.createServer(yoga);
 
-// Start the server on port 4000 (or any port you prefer)
-server.listen(4000, () => {
-  console.log('GraphQL Yoga server is running on http://localhost:4000');
+// Start the server on the specified port
+server.listen(PORT, () => {
+  console.log(`GraphQL Yoga server is running on http://localhost:${PORT}`);
 });
